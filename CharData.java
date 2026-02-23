@@ -1,35 +1,26 @@
-/** Represents a character data object. 
- *  A character data object has a char value,
- *  a counter, and two probability fields. */
+/** Represents a character data object. */
 public class CharData {
 
-	// a character
-	char chr;
+    char symbol;
+    int times; 
+    double prob;    
+    double cumProb;
 
-	// a counter
-	int count; 
+    /** Creates and initializes a character data object. */
+    public CharData(char symbol) {
+        this.symbol = symbol;
+        this.times = 1;
+        this.prob = 0;
+        this.cumProb = 0;
+    }
 
-	// a probability (number between 0 and 1)
-	double p;    
-
-	// a commulative probability (number between 0 and 1)
-	double cp;
-
-	/** Creates and initializes a character data object. */
-	public CharData(char chr) {
-		this.chr = chr;
-		this.count = 1;
-		this.p = 0;
-		this.cp = 0;
-	}
-
-	/** Checks if the character of this CharData object equals the given character. */
-	public boolean equals(char chr) {
-		return this.chr == chr;
-	}
-	
-	/** Returns a textual representation of this CharData object. */
-	public String toString() {
-		return "(" + chr + " " + count + " " + p + " " + cp + ")";
-	}
+    /** Checks if the character of this CharData object equals the given character. */
+    public boolean equals(char other) {
+        return this.symbol == other;
+    }
+    
+    /** Returns a textual representation of this CharData object. */
+    public String toString() {
+        return "(" + symbol + " " + times + " " + prob + " " + cumProb + ")";
+    }
 }

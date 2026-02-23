@@ -3,74 +3,124 @@ import java.util.Random;
 
 public class LanguageModel {
 
-    // The map of this model.
-    // Maps windows to lists of charachter data objects.
-    HashMap<String, List> CharDataMap;
+    // Maps sequences to their corresponding character data lists
+    HashMap<String, List> usageMap;
     
-    // The window length used in this model.
-    int windowLength;
+    int winSize;
     
-    // The random number generator used by this model. 
-	private Random randomGenerator;
+    private Random randomizer;
 
-    /** Constructs a language model with the given window length and a given
-     *  seed value. Generating texts from this model multiple times with the 
-     *  same seed value will produce the same random texts. Good for debugging. */
-    public LanguageModel(int windowLength, int seed) {
-        this.windowLength = windowLength;
-        randomGenerator = new Random(seed);
-        CharDataMap = new HashMap<String, List>();
+    /** Constructs a language model with the given window length and a seed. */
+    public LanguageModel(int winSize, int seed) {
+        this.winSize = winSize;
+        this.randomizer = new Random(seed);
+        this.usageMap = new HashMap<String, List>();
     }
 
-    /** Constructs a language model with the given window length.
-     * Generating texts from this model multiple times will produce
-     * different random texts. Good for production. */
-    public LanguageModel(int windowLength) {
-        this.windowLength = windowLength;
-        randomGenerator = new Random();
-        CharDataMap = new HashMap<String, List>();
+    /** Constructs a language model with the given window length. */
+    public LanguageModel(int winSize) {
+        this.winSize = winSize;
+        this.randomizer = new Random();
+        this.usageMap = new HashMap<String, List>();
     }
 
-    /** Builds a language model from the text in the given file (the corpus). */
-	public void train(String fileName) {
-		// Your code goes here
-	}
+    /** Builds a language model from the text in the given file. */
+    public void train(String fileName) {
+        String currentWindow = "";
+        char nextChar;
 
-    // Computes and sets the probabilities (p and cp fields) of all the
-	// characters in the given list. */
-	void calculateProbabilities(List probs) {				
-		// Your code goes here
-	}
+        In inputReader = new In(fileName);
+        
+        while ((!inputReader.isEmpty()) && (currentWindow.length() < winSize)) {
+            nextChar = inputReader.readChar();
+            currentWindow += nextChar;
+        }
+        
+        while (!inputReader.isEmpty()) {
+            nextChar = inputReader.readChar();
+            
+            List stats = usageMap.get(currentWindow);
+            if (stats == null) {
+                stats = new List();
+                usageMap.put(currentWindow, stats);
+            }
+            stats.update(nextChar);
 
-    // Returns a random character from the given probabilities list.
-	char getRandomChar(List probs) {
-		// Your code goes here
-		return ' ';
-	}
+            currentWindow += nextChar;
+            currentWindow = currentWindow.substring(1);
+        }
 
-    /**
-	 * Generates a random text, based on the probabilities that were learned during training. 
-	 * @param initialText - text to start with. If initialText's last substring of size numberOfLetters
-	 * doesn't appear as a key in Map, we generate no text and return only the initial text. 
-	 * @param numberOfLetters - the size of text to generate
-	 * @return the generated text
-	 */
-	public String generate(String initialText, int textLength) {
-		// Your code goes here
-        return "";
-	}
+        for (List stats : usageMap.values())
+            computeDistributions(stats);
+    }
+
+    // Sets the probabilities for all characters in the list.
+    void computeDistributions(List stats) {               
+        int totalCount = 0;
+        for (int i = 0; i < stats.getSize(); ++i) {
+            totalCount += stats.get(i).count;
+        }
+
+        for (int i = 0; i < stats.getSize(); ++i) {
+            stats.get(i).prob = stats.get(i).count / (double)totalCount; 
+            stats.get(i).cumProb = stats.get(i).prob + (i > 0 ? stats.get(i - 1).cumProb : 0); 
+        }
+    }
+
+    // Returns a random character based on the learned distribution.
+    char pickRandom(List stats) {
+        double r = randomizer.nextDouble();
+        char result = ' ';
+        for (int i = 0; i < stats.getSize(); ++i) {
+            if (r < stats.get(i).cumProb) {
+                result = stats.get(i).symbol; // Using 'symbol' from our updated CharData
+                break;
+            }
+        }
+        return result;
+    }
+
+    /** Generates a random text based on the learned probabilities. */
+    public String generate(String prefix, int length) {
+        if (prefix.length() < winSize)
+            return prefix;
+
+        String output = prefix;
+        for (int i = 0; i < length; ++i) {
+            String currentWin = output.substring(output.length() - winSize);
+            List stats = usageMap.get(currentWin);
+            if (stats == null)
+                return output;
+
+            output += pickRandom(stats);
+        }
+        return output;
+    }
 
     /** Returns a string representing the map of this language model. */
-	public String toString() {
-		StringBuilder str = new StringBuilder();
-		for (String key : CharDataMap.keySet()) {
-			List keyProbs = CharDataMap.get(key);
-			str.append(key + " : " + keyProbs + "\n");
-		}
-		return str.toString();
-	}
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (String key : usageMap.keySet()) {
+            List stats = usageMap.get(key);
+            sb.append(key + " : " + stats + "\n");
+        }
+        return sb.toString();
+    }
 
     public static void main(String[] args) {
-		// Your code goes here
+        int winSize = Integer.parseInt(args[0]);
+        String prefix = args[1];
+        int totalLength = Integer.parseInt(args[2]);
+        Boolean isRandom = args[3].equals("random");
+        String file = args[4];
+
+        LanguageModel model;
+        if (isRandom)
+            model = new LanguageModel(winSize);
+        else
+            model = new LanguageModel(winSize, 20);
+
+        model.train(file);
+        System.out.println(model.generate(prefix, totalLength));
     }
 }
