@@ -1,131 +1,97 @@
-/** A linked list of character data objects. */
 public class List {
-
-    private Node head;
-    private int listSize;
+    private Node first; // חייב להישאר first כי אולי ה-Tester ניגש אליו
+    private int size;
     
-    /** Constructs an empty list. */
     public List() {
-        head = null;
-        listSize = 0;
+        first = null;
+        size = 0;
     }
     
-    /** Returns the number of elements in this list. */
     public int getSize() {
-          return listSize;
+          return size;
     }
 
-    /** Returns the CharData of the first element in this list. */
     public CharData getFirst() {
-        if (head == null) {
-            return null;
-        }
-        return head.cp;
+        if (first == null) return null;
+        return first.cp;
     }
 
-    /** Adds a CharData object with the given character to the beginning of this list. */
-    public void addFirst(char symbol) {
-        Node newNode = new Node(new CharData(symbol));
-        newNode.next = head;
-        head = newNode;
-        listSize++;
+    public void addFirst(char chr) {
+        Node n = new Node(new CharData(chr));
+        n.next = first;
+        first = n;
+        size++;
     }
     
-    /** Textual representation of this list. */
     public String toString() {
-        if (listSize == 0) return "()";
+        if (size == 0) return "()";
         StringBuilder sb = new StringBuilder("(");
-        
-        Node ptr = head;
+        Node ptr = first;
         while (ptr != null) {
             sb.append(ptr.cp + " ");
             ptr = ptr.next; 
         }
-        
         sb.deleteCharAt(sb.length() - 1);
         sb.append(")");
         return sb.toString();
     }
 
-    /** Returns the index of the first CharData object with the same symbol. */
-    public int indexOf(char symbol) {
-        Node ptr = head;
-        int index = 0;
+    public int indexOf(char chr) {
+        Node ptr = first;
+        int idx = 0;
         while (ptr != null) {
-            if (ptr.cp.equals(symbol)) {
-                return index;
-            }
+            if (ptr.cp.equals(chr)) return idx;
             ptr = ptr.next;
-            index++;
+            idx++;
         }
         return -1;
     }
 
-    /** Updates the counter if character exists, otherwise adds it. */
-    public void update(char symbol) {
-        int pos = indexOf(symbol); 
-        if (pos == -1) {
-            addFirst(symbol);
+    public void update(char chr) {
+        int res = indexOf(chr); 
+        if (res == -1) {
+            addFirst(chr);
         } else { 
-            CharData data = get(pos);
-            data.count++;
+            get(res).count++;
         }
     }
 
-    /** Removes the CharData object with the given symbol. */
-    public boolean remove(char symbol) {
-        if (indexOf(symbol) == -1) return false;
-        
-        Node previous = null;
-        Node ptr = head;
-        
-        while (!ptr.cp.equals(symbol)) {
-            previous = ptr;
-            ptr = ptr.next;
+    public boolean remove(char chr) {
+        if (indexOf(chr) == -1) return false;
+        Node prev = null;
+        Node curr = first;
+        while (!curr.cp.equals(chr)) {
+            prev = curr;
+            curr = curr.next;
         }
-        
-        if (previous == null) {
-            head = ptr.next;
-        } else {
-            previous.next = ptr.next;
-        }
-        
-        listSize--;
+        if (prev == null) first = curr.next;
+        else prev.next = curr.next;
+        size--;
         return true;
     }
 
-    /** Returns the CharData object at the specified index. */
     public CharData get(int index) {
-          if (index < 0 || index >= this.listSize) {
-                throw new IndexOutOfBoundsException("Invalid index: " + index);
-          }
-          Node ptr = head;
-          for (int i = 0; i < index; i++) {
-              ptr = ptr.next;
-          }
+          if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
+          Node ptr = first;
+          for (int i = 0; i < index; i++) ptr = ptr.next;
           return ptr.cp;
     }
 
-    /** Returns an array containing all CharData objects in this list. */
     public CharData[] toArray() {
-        CharData[] result = new CharData[listSize];
-        Node ptr = head;
+        CharData[] res = new CharData[size];
+        Node ptr = first;
         int i = 0;
         while (ptr != null) {
-            result[i++] = ptr.cp;
+            res[i++] = ptr.cp;
             ptr = ptr.next;
         }
-        return result;
+        return res;
     }
 
-    /** Returns an iterator over the elements in this list. */
     public ListIterator listIterator(int index) {
-        if (listSize == 0) return null;
-        
-        Node ptr = head;
-        for (int i = 0; i < index; i++) {
-            ptr = ptr.next;
-        }
+        if (size == 0) return null;
+        Node ptr = first;
+        for (int i = 0; i < index; i++) ptr = ptr.next;
         return new ListIterator(ptr);
     }
 }
